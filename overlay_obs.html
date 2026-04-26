@@ -2,195 +2,307 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Rosetta Stone Overlay v5.0</title>
-    <style id="base-styles">
-        body, html { background-color: transparent !important; margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
-        
-        #subtitle-container { 
-            position: absolute; 
-            padding: 25px; 
-            border-radius: 15px; 
-            text-align: center; 
-            opacity: 0; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; /* Bounding Box solicita */
-            box-shadow: 0px 8px 32px rgba(0,0,0,0.6); 
-            box-sizing: border-box;
-            transition: opacity 0.4s ease, left 0.2s ease, top 0.2s ease;
+    <title>Rosetta Stone OBS CSS Variables v18.0</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Arsenal:ital,wght@0,400;0,700;1,400;1,700&family=Bangers&family=Bebas+Neue&family=Montserrat:wght@400;800;900&family=Roboto:wght@400;700;900&display=swap');
+    </style>
+    <style>
+        :root {
+            --font-family: 'Roboto', sans-serif;
+            --font-color: #ffffff;
+            --font-size: 2.2em;
+            --stroke-color: #000000;
+            --stroke-size: 0px;
+            
+            --text-max-width: 800px;
+            --text-offset-x: 0px;
+            --text-offset-y: 0px;
+            
+            --text-transform: none;
+            --text-transform-origin: left center;
+
+            --box-bg: transparent;
+            
+            --bubble-bg: #1a1a24;
+            --bubble-scale: 1;
+
+            /* A NOVA MÁGICA: DIMENSÕES DESACOPLADAS */
+            --bubble-width: fit-content;
+            --bubble-height: fit-content;
         }
 
-        #bg-pattern { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.2; }
+        body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: transparent !important; }
         
-        /* content-wrapper agora ocupa 100% da altura da box para ditar a gravidade */
-        #content-wrapper { 
+        #anchor {
+            position: absolute;
+            left: 50%;
+            top: 90%;
+            transform: translate(-50%, -90%);
+            z-index: 10;
+        }
+
+        #chat-window { 
+            position: relative; 
+            border-radius: 12px; 
+            display: flex; 
+            overflow: hidden; 
+            box-sizing: border-box;
+            background: var(--box-bg);
+            transition: width 0.3s, height 0.3s, background 0.3s;
+        }
+        
+        #message-list { 
             position: relative; 
             z-index: 2; 
             width: 100%; 
             height: 100%; 
             display: flex; 
-            flex-direction: column; 
+            padding: 15px;
+            box-sizing: border-box;
+            gap: 20px; 
+            overflow: hidden;
         }
 
-        .message-block {
-            margin-bottom: 15px;
-            flex-shrink: 0; /* Impede que o texto amasse */
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+            margin-top: 10px;
+            width: var(--bubble-width); /* <- FORÇA A LARGURA PELA VARIÁVEL */
+            height: var(--bubble-height); /* <- FORÇA A ALTURA PELA VARIÁVEL */
+            animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+            
+            /* Quando a Box é maior que o texto, nós alinhamos ele ao centro */
+            justify-content: center;
+            align-items: center;
         }
 
-        #translated-text { 
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .text-wrapper {
+            /* Controle fino do texto flutuando solto da caixa de background */
+            transform: translate(var(--text-offset-x), var(--text-offset-y));
+            max-width: var(--text-max-width);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .msg-text { 
+            font-family: var(--font-family);
+            color: var(--font-color);
+            -webkit-text-stroke: var(--stroke-size) var(--stroke-color);
+            font-size: var(--font-size); 
             font-weight: 800; 
-            font-size: 2.3em; 
-            line-height: 1.1; 
-            color: white; 
-            text-shadow: 2px 2px 5px rgba(0,0,0,0.9); 
-            width: 100%; 
+            line-height: 1.2; 
             word-wrap: break-word; 
+            transition: color 0.3s;
+            transform: var(--text-transform);
+            transform-origin: var(--text-transform-origin);
         }
-
-        #original-text { 
-            color: rgba(255, 255, 255, 0.6); 
-            font-size: 1em; 
-            font-weight: 400; 
+        
+        .msg-orig { 
+            font-family: var(--font-family);
+            color: var(--font-color);
+            font-size: calc(var(--font-size) * 0.45); 
             font-style: italic; 
-            margin-top: 10px; 
-            width: 100%; 
+            margin-top: 5px; 
             word-wrap: break-word; 
-            border-top: 1px solid rgba(255,255,255,0.1); 
-            padding-top: 5px; 
+            opacity: 0.8;
+            transition: color 0.3s;
+            transform: var(--text-transform);
+            transform-origin: var(--text-transform-origin);
         }
 
-        /* FX ENGINE */
-        .visible { opacity: 1 !important; }
-        .fade-anim { transition: opacity 0.5s ease; }
-        .slide-anim { transition: transform 0.5s ease, opacity 0.5s ease; }
-        .zoom-anim { transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.4s ease; }
+        /* 1. PLAIN TEXT */
+        .style-plain .text-wrapper { }
 
-        .hidden-fx { opacity: 0 !important; transform: scale(0.8) translateY(20px); }
+        /* 2. BOX CLÁSSICA */
+        .style-box { 
+            background: var(--bubble-bg); 
+            padding: 10px 15px; border-radius: 8px; 
+            max-width: 95%;
+        }
+
+        /* 3. SPEECH BUBBLE CLÁSSICA */
+        .style-bubble { 
+            background: var(--bubble-bg); 
+            position: relative; padding: 15px 20px; border-radius: 20px; 
+            max-width: 90%; margin-left: 10px;
+        }
+        .style-bubble::after { 
+            content: ''; position: absolute; bottom: -10px; left: 20px; border-width: 12px 12px 0; border-style: solid; 
+            border-color: var(--bubble-bg) transparent transparent transparent;
+        }
+        
+        /* 4. PERSONA 5 ROYAL */
+        .style-persona { 
+            position: relative;
+            padding: 35px 50px; 
+            border: none !important; 
+            background: transparent !important; 
+            box-shadow: none !important;
+            min-width: 250px;
+            max-width: 90%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .style-persona::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('persona_5_dialog_box_by_rodroseasons_dborar3.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            z-index: -1;
+            transform: scale(var(--bubble-scale)); 
+        }
+
+        .style-persona.tail-right::before {
+            transform: scaleX(-1) scale(var(--bubble-scale));
+        }
+
+        .style-persona .msg-text, .style-persona .msg-orig { 
+            text-shadow: none !important; 
+            transform: var(--text-transform) skewX(-4deg);
+        }
+
     </style>
 </head>
 <body id="obs-body">
 
-    <div id="subtitle-container">
-        <div id="bg-pattern"></div>
-        <div id="content-wrapper"></div>
+    <div id="anchor">
+        <div id="chat-window">
+            <div id="message-list"></div>
+        </div>
     </div>
 
     <script>
-        const container = document.getElementById('subtitle-container');
-        const bgPatternDiv = document.getElementById('bg-pattern');
-        const contentWrapper = document.getElementById('content-wrapper');
+        const anchor = document.getElementById('anchor');
+        const chatWindow = document.getElementById('chat-window');
+        const msgList = document.getElementById('message-list');
+        const rootStyle = document.documentElement.style;
         
-        let hideTimeout;
-        let messageHistory = [];
-
-        const svgDict = {
-            "waves1": "data:image/svg+xml,<svg width='40' height='40' xmlns='http://www.w3.org/2000/svg'><path d='M0 20 Q10 10 20 20 T40 20' fill='none' stroke='{c}' stroke-width='2'/></svg>",
-            "shapes": "data:image/svg+xml,<svg width='60' height='60' xmlns='http://www.w3.org/2000/svg'><rect width='20' height='20' fill='{c}' opacity='0.5'/><circle cx='40' cy='40' r='10' fill='{c}'/></svg>",
-            "hexagons": "data:image/svg+xml,<svg width='30' height='50' xmlns='http://www.w3.org/2000/svg'><path d='M15 0 L30 10 L30 30 L15 40 L0 30 L0 10 Z' fill='none' stroke='{c}'/></svg>",
-            "stars": "data:image/svg+xml,<svg width='40' height='40' xmlns='http://www.w3.org/2000/svg'><path d='M20 2 L23 12 L33 12 L25 18 L28 28 L20 22 L12 28 L15 18 L7 12 L17 12 Z' fill='{c}'/></svg>"
-        };
+        let hideTimer;
+        let historyArray = [];
 
         function hexToRgba(hex, alpha) {
+            if(!hex) return 'transparent';
             let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
             return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
 
-        function connectWebSocket() {
+        function connectWS() {
             const ws = new WebSocket('ws://localhost:8765');
-            ws.onmessage = (event) => {
+            ws.onmessage = (e) => {
                 try {
-                    const data = JSON.parse(event.data);
-                    if (data.config) {
-                        // 1. POSICIONAMENTO ABSOLUTO X/Y
-                        container.style.left = data.config.posX + "%";
-                        container.style.top = data.config.posY + "%";
-                        container.style.transform = `translate(-${data.config.posX}%, -${data.config.posY}%)`;
+                    const d = JSON.parse(e.data);
+                    
+                    if (d.cfg) {
+                        // POSIÇÃO E JANELA
+                        anchor.style.left = d.cfg.x + "%";
+                        anchor.style.top = d.cfg.y + "%";
+                        anchor.style.transform = `translate(-${d.cfg.x}%, -${d.cfg.y}%)`;
                         
-                        // 2. TAMANHO FIXO (BLINDADO)
-                        container.style.width = data.config.boxWidth;
-                        container.style.height = data.config.boxHeight;
-                        container.style.backgroundColor = hexToRgba(data.config.bgColorHex, data.config.bgOpacity);
-                        container.style.border = data.config.showBorder ? `4px solid ${data.config.borderColor}` : "none";
+                        chatWindow.style.width = d.cfg.w;
+                        chatWindow.style.height = d.cfg.h;
+                        msgList.style.flexDirection = d.cfg.flow;
+                        msgList.style.justifyContent = 'flex-start';
 
-                        // 3. GRAVIDADE DO TEXTO (CORREÇÃO FINAL)
-                        if (data.config.textFlow === 'bottom-to-top') {
-                            contentWrapper.style.justifyContent = 'flex-end';
-                        } else if (data.config.textFlow === 'top-to-bottom') {
-                            contentWrapper.style.justifyContent = 'flex-start';
+                        // ATUALIZAÇÃO SEGURA DAS VARIÁVEIS NO :ROOT
+                        rootStyle.setProperty('--box-bg', hexToRgba(d.cfg.boxBg, d.cfg.boxOp));
+                        
+                        // O DESACOPLAMENTO FÍSICO DO BACKGROUND
+                        rootStyle.setProperty('--bubble-width', d.cfg.bubW);
+                        rootStyle.setProperty('--bubble-height', d.cfg.bubH);
+                        
+                        rootStyle.setProperty('--bubble-bg', hexToRgba(d.cfg.msgBg, d.cfg.msgOp));
+                        rootStyle.setProperty('--bubble-scale', d.cfg.bScale);
+
+                        rootStyle.setProperty('--font-color', d.cfg.fontC);
+                        rootStyle.setProperty('--stroke-color', d.cfg.strkC);
+                        rootStyle.setProperty('--stroke-size', d.cfg.strkS);
+                        rootStyle.setProperty('--font-size', d.cfg.fSize);
+                        
+                        rootStyle.setProperty('--text-max-width', d.cfg.tMaxW);
+                        rootStyle.setProperty('--text-offset-x', d.cfg.tOffX);
+                        rootStyle.setProperty('--text-offset-y', d.cfg.tOffY);
+
+                        rootStyle.setProperty('--font-family', `"${d.cfg.font}", sans-serif`);
+
+                        // EFEITO ARSENAL
+                        if (d.cfg.font === 'Arsenal') {
+                            rootStyle.setProperty('--text-transform', 'scaleX(1.15)');
+                            rootStyle.setProperty('--text-transform-origin', 'left center');
                         } else {
-                            contentWrapper.style.justifyContent = 'center';
+                            rootStyle.setProperty('--text-transform', 'none');
+                            rootStyle.setProperty('--text-transform-origin', 'left center');
                         }
+                    }
 
-                        // 4. TEXTURAS
-                        if (data.config.bgPattern !== "none" && svgDict[data.config.bgPattern]) {
-                            const svg = svgDict[data.config.bgPattern].replace(/\{c\}/g, data.config.patternColor.replace('#', '%23'));
-                            bgPatternDiv.style.backgroundImage = `url("${svg}")`;
-                        } else { bgPatternDiv.style.backgroundImage = "none"; }
+                    // A MÁGICA DO HISTÓRICO ZERO (0)
+                    let limit = parseInt(d.cfg.hist) || 0;
 
-                        // 5. FONTES
-                        if (data.config.fontFamily === 'Custom' && data.config.customFontBase64) {
-                            let fNode = document.getElementById('dyn-font') || document.createElement('style');
-                            fNode.id = 'dyn-font';
-                            fNode.innerHTML = `@font-face { font-family: 'Custom'; src: url(${data.config.customFontBase64}); }`;
-                            document.head.appendChild(fNode);
-                        } else if (data.config.isGoogleFont) {
-                            let gNode = document.getElementById('g-font') || document.createElement('link');
-                            gNode.id = 'g-font'; gNode.rel = 'stylesheet';
-                            gNode.href = `https://fonts.googleapis.com/css2?family=${data.config.fontFamily.replace(/ /g, '+')}:wght@800&display=swap`;
-                            document.head.appendChild(gNode);
+                    if (d.isFinal && d.trans) {
+                        if (limit > 0) {
+                            historyArray.push({ orig: d.orig, trans: d.trans });
+                            while (historyArray.length > limit) historyArray.shift();
+                        } else {
+                            historyArray = [{ orig: d.orig, trans: d.trans }];
                         }
+                    } else if (!d.isFinal && limit === 0) {
+                        historyArray = [];
+                    }
+
+                    // RENDERIZAÇÃO DOM
+                    if (d.orig || d.trans || historyArray.length > 0) {
+                        msgList.innerHTML = ""; 
                         
-                        // 6. CSS EXTRA
-                        let cssNode = document.getElementById('dyn-css') || document.createElement('style');
-                        cssNode.id = 'dyn-css'; cssNode.innerHTML = data.config.customCSS;
-                        document.head.appendChild(cssNode);
+                        historyArray.forEach((msg) => {
+                            const block = document.createElement('div');
+                            let pClass = d.cfg.bStyle === 'persona' ? `tail-${d.cfg.pTail}` : "";
+                            block.className = `message-row style-${d.cfg.bStyle} ${pClass}`;
+                            
+                            let origHtml = d.cfg.origOn ? `<div class="msg-orig">${msg.orig}</div>` : "";
+                            block.innerHTML = `<div class="text-wrapper"><div class="msg-text">${msg.trans}</div>${origHtml}</div>`;
+                            
+                            if(d.cfg.flow === 'column-reverse') msgList.prepend(block);
+                            else msgList.appendChild(block);
+                        });
+
+                        if (!d.isFinal && d.orig) {
+                            const interim = document.createElement('div');
+                            let pClass = d.cfg.bStyle === 'persona' ? `tail-${d.cfg.pTail}` : "";
+                            interim.className = `message-row style-${d.cfg.bStyle} ${pClass}`;
+                            interim.style.opacity = "0.7";
+                            
+                            let origHtml = d.cfg.origOn ? `<div class="msg-orig">${d.orig}</div>` : "";
+                            interim.innerHTML = `<div class="text-wrapper"><div class="msg-text">${d.trans || "..."}</div>${origHtml}</div>`;
+                            
+                            if(d.cfg.flow === 'column-reverse') msgList.prepend(interim);
+                            else msgList.appendChild(interim);
+                        }
+
+                        clearTimeout(hideTimer);
+                        if (d.isFinal) {
+                            hideTimer = setTimeout(() => {
+                                historyArray = []; 
+                                msgList.innerHTML = ""; 
+                            }, d.cfg.time);
+                        }
                     }
 
-                    // Lógica de Pilha de Histórico
-                    if (data.isFinal && data.translated) {
-                        messageHistory.push({ original: data.original, translated: data.translated });
-                        if (messageHistory.length > 3) messageHistory.shift();
-                    }
-
-                    // Renderização Dinâmica na Box
-                    contentWrapper.innerHTML = "";
-                    messageHistory.forEach((msg) => {
-                        const block = document.createElement('div');
-                        block.className = "message-block";
-                        let originalHTML = data.config.showOriginal ? `<div id="original-text">${msg.original}</div>` : "";
-                        block.innerHTML = `<div id="translated-text" style="font-family: ${data.config.fontFamily === 'Custom' ? 'Custom' : data.config.fontFamily}; color: ${data.config.fontColor};">${msg.translated}</div>${originalHTML}`;
-                        contentWrapper.appendChild(block);
-                    });
-
-                    // Texto Interim (Falas em andamento)
-                    if (!data.isFinal && data.translated) {
-                        const interim = document.createElement('div');
-                        interim.className = "message-block";
-                        interim.style.opacity = "0.7";
-                        let originalHTML = data.config.showOriginal ? `<div id="original-text">${data.original}</div>` : "";
-                        interim.innerHTML = `<div id="translated-text" style="font-family: ${data.config.fontFamily === 'Custom' ? 'Custom' : data.config.fontFamily}; color: ${data.config.fontColor};">${data.translated}</div>${originalHTML}`;
-                        contentWrapper.appendChild(interim);
-                    }
-
-                    // FX ENGINE
-                    container.classList.remove('hidden-fx');
-                    container.classList.add('visible');
-
-                    clearTimeout(hideTimeout);
-                    if (data.isFinal) {
-                        hideTimeout = setTimeout(() => {
-                            container.classList.add('hidden-fx');
-                            setTimeout(() => { 
-                                container.classList.remove('visible'); 
-                                messageHistory = []; 
-                            }, 500);
-                        }, data.config.displayTime);
-                    }
-                } catch (e) { console.error(e); }
+                } catch(err) { console.error("OBS DOM Render Error:", err); }
             };
-            ws.onclose = () => setTimeout(connectWebSocket, 3000);
+            ws.onclose = () => setTimeout(connectWS, 3000);
         }
-        connectWebSocket();
+        connectWS();
     </script>
 </body>
 </html>

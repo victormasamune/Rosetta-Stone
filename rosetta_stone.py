@@ -9,9 +9,6 @@ import socketserver
 import time
 import multiprocessing
 
-# ==========================================
-# 1. RESOLUÇÃO DE DIRETÓRIO PARA EXE/SCRIPT
-# ==========================================
 def get_resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -19,9 +16,6 @@ def get_resource_path(relative_path):
         base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, relative_path)
 
-# ==========================================
-# 2. MOTOR DO WEBSOCKET SERVER (PORTA 8765)
-# ==========================================
 CLIENTS = set()
 
 async def handler(websocket):
@@ -40,34 +34,43 @@ async def handler(websocket):
         CLIENTS.remove(websocket)
 
 async def ws_main():
-    async with websockets.serve(handler, "localhost", 8765):
-        print("[WS] Servidor Rosetta Stone rodando na porta 8765.")
-        await asyncio.Future()
+    try:
+        async with websockets.serve(handler, "localhost", 8765):
+            print("[WS] Servidor Rosetta Stone Chat Engine ONLINE (Porta 8765).")
+            await asyncio.Future()
+    except OSError as e:
+        if e.errno == 10048 or "10048" in str(e):
+            print("\n[ERRO DE REDE] A porta 8765 ja esta em uso pelo Windows!")
+            print("Solucao: Abra o Prompt de Comando (CMD) e digite: taskkill /F /IM python.exe")
+            os._exit(1)
+        else:
+            raise e
 
 def start_ws_server():
     asyncio.run(ws_main())
 
-# ==========================================
-# 3. MOTOR HTTP SERVER (PORTA 8080)
-# ==========================================
 def start_http_server():
-    path = get_resource_path("")
-    os.chdir(path)
+    os.chdir(get_resource_path(""))
     Handler = http.server.SimpleHTTPRequestHandler
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", 8080), Handler) as httpd:
-        print("[HTTP] Assets da interface servindo na porta 8080.")
-        httpd.serve_forever()
+    try:
+        with socketserver.TCPServer(("", 8080), Handler) as httpd:
+            print("[HTTP] Assets da interface ativos (Porta 8080).")
+            httpd.serve_forever()
+    except OSError as e:
+        if e.errno == 10048 or "10048" in str(e):
+            print("\n[ERRO DE REDE] A porta 8080 ja esta em uso pelo Windows!")
+            print("Solucao: Abra o Prompt de Comando (CMD) e digite: taskkill /F /IM python.exe")
+            os._exit(1)
+        else:
+            raise e
 
-# ==========================================
-# 4. INICIALIZAÇÃO DA APLICAÇÃO
-# ==========================================
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-
+    
     threading.Thread(target=start_ws_server, daemon=True).start()
     threading.Thread(target=start_http_server, daemon=True).start()
-
+    
     time.sleep(1.5)
 
     url = "http://localhost:8080/captura_voz.html"
@@ -89,8 +92,9 @@ if __name__ == '__main__':
     ]
 
     try:
-        process = subprocess.Popen(chrome_flags)
-        while process.poll() is None:
+        subprocess.Popen(chrome_flags)
+        while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        print("\nEncerrando Rosetta Stone...")
         sys.exit(0)
