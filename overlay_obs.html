@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Rosetta Stone OBS CSS Variables v18.0</title>
+    <title>Rosetta Stone OBS Contextual v27.0</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Anton&family=Arsenal:ital,wght@0,400;0,700;1,400;1,700&family=Bangers&family=Bebas+Neue&family=Montserrat:wght@400;800;900&family=Roboto:wght@400;700;900&display=swap');
     </style>
@@ -17,16 +17,21 @@
             --text-max-width: 800px;
             --text-offset-x: 0px;
             --text-offset-y: 0px;
-            
-            --text-transform: none;
-            --text-transform-origin: left center;
+            --text-scale-x: 1; 
 
             --box-bg: transparent;
             
             --bubble-bg: #1a1a24;
-            --bubble-scale: 1;
+            --bubble-bc: transparent;
+            --bubble-bs: 0px;
+            --bubble-rad: 12px; 
+            
+            /* Variáveis da Cauda (Speech Bubble) */
+            --tail-h: 25px;
+            --tail-w: 30px;
+            --tail-pos: 35px;
 
-            /* A NOVA MÁGICA: DIMENSÕES DESACOPLADAS */
+            --bubble-scale: 1;
             --bubble-width: fit-content;
             --bubble-height: fit-content;
         }
@@ -57,7 +62,7 @@
             width: 100%; 
             height: 100%; 
             display: flex; 
-            padding: 15px;
+            padding: 25px; 
             box-sizing: border-box;
             gap: 20px; 
             overflow: hidden;
@@ -66,13 +71,11 @@
         .message-row {
             display: flex;
             flex-direction: column;
-            margin-bottom: 10px;
-            margin-top: 10px;
-            width: var(--bubble-width); /* <- FORÇA A LARGURA PELA VARIÁVEL */
-            height: var(--bubble-height); /* <- FORÇA A ALTURA PELA VARIÁVEL */
+            margin-bottom: calc(var(--tail-h) + 10px); 
+            margin-top: calc(var(--tail-h) + 10px); 
+            width: var(--bubble-width); 
+            height: var(--bubble-height); 
             animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
-            
-            /* Quando a Box é maior que o texto, nós alinhamos ele ao centro */
             justify-content: center;
             align-items: center;
         }
@@ -83,13 +86,13 @@
         }
 
         .text-wrapper {
-            /* Controle fino do texto flutuando solto da caixa de background */
             transform: translate(var(--text-offset-x), var(--text-offset-y));
             max-width: var(--text-max-width);
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
+            z-index: 5;
         }
 
         .msg-text { 
@@ -101,8 +104,8 @@
             line-height: 1.2; 
             word-wrap: break-word; 
             transition: color 0.3s;
-            transform: var(--text-transform);
-            transform-origin: var(--text-transform-origin);
+            transform: scaleX(var(--text-scale-x));
+            transform-origin: center center;
         }
         
         .msg-orig { 
@@ -114,8 +117,8 @@
             word-wrap: break-word; 
             opacity: 0.8;
             transition: color 0.3s;
-            transform: var(--text-transform);
-            transform-origin: var(--text-transform-origin);
+            transform: scaleX(var(--text-scale-x));
+            transform-origin: center center;
         }
 
         /* 1. PLAIN TEXT */
@@ -123,28 +126,94 @@
 
         /* 2. BOX CLÁSSICA */
         .style-box { 
-            background: var(--bubble-bg); 
-            padding: 10px 15px; border-radius: 8px; 
+            background-color: var(--bubble-bg) !important; 
+            border: var(--bubble-bs) solid var(--bubble-bc) !important;
+            padding: 15px 25px; 
+            border-radius: var(--bubble-rad); 
             max-width: 95%;
         }
 
-        /* 3. SPEECH BUBBLE CLÁSSICA */
+        /* ========================================================
+           3. SPEECH BUBBLE CLÁSSICA (6 DIREÇÕES MATEMÁTICAS)
+           ======================================================== */
         .style-bubble { 
-            background: var(--bubble-bg); 
-            position: relative; padding: 15px 20px; border-radius: 20px; 
-            max-width: 90%; margin-left: 10px;
+            background-color: var(--bubble-bg) !important; 
+            border: var(--bubble-bs) solid var(--bubble-bc) !important;
+            position: relative; 
+            padding: 15px 25px; 
+            border-radius: var(--bubble-rad); 
+            max-width: 90%; 
+            margin-left: 20px; 
+            margin-right: 20px;
         }
-        .style-bubble::after { 
-            content: ''; position: absolute; bottom: -10px; left: 20px; border-width: 12px 12px 0; border-style: solid; 
-            border-color: var(--bubble-bg) transparent transparent transparent;
+
+        /* CAUDA: BAIXO - ESQUERDA */
+        .style-bubble.dir-bottom-left::after {
+            content: ''; position: absolute; bottom: calc(var(--tail-h) * -1); left: var(--tail-pos); 
+            border-width: var(--tail-h) var(--tail-w) 0 0; border-style: solid; border-color: var(--bubble-bg) transparent transparent transparent; z-index: 2;
         }
+        .style-bubble.dir-bottom-left::before {
+            content: ''; position: absolute; bottom: calc((var(--tail-h) + var(--bubble-bs)) * -1); left: var(--tail-pos); 
+            border-width: calc(var(--tail-h) + var(--bubble-bs)) calc(var(--tail-w) + var(--bubble-bs)) 0 0; border-style: solid; border-color: var(--bubble-bc) transparent transparent transparent; margin-left: calc(var(--bubble-bs) * -1); z-index: 1;
+        }
+
+        /* CAUDA: BAIXO - DIREITA */
+        .style-bubble.dir-bottom-right::after {
+            content: ''; position: absolute; bottom: calc(var(--tail-h) * -1); right: var(--tail-pos); 
+            border-width: var(--tail-h) 0 0 var(--tail-w); border-style: solid; border-color: var(--bubble-bg) transparent transparent transparent; z-index: 2;
+        }
+        .style-bubble.dir-bottom-right::before {
+            content: ''; position: absolute; bottom: calc((var(--tail-h) + var(--bubble-bs)) * -1); right: var(--tail-pos); 
+            border-width: calc(var(--tail-h) + var(--bubble-bs)) 0 0 calc(var(--tail-w) + var(--bubble-bs)); border-style: solid; border-color: var(--bubble-bc) transparent transparent transparent; margin-right: calc(var(--bubble-bs) * -1); z-index: 1;
+        }
+
+        /* CAUDA: BAIXO - CENTRO */
+        .style-bubble.dir-bottom-center::after {
+            content: ''; position: absolute; bottom: calc(var(--tail-h) * -1); left: 50%; transform: translateX(-50%);
+            border-width: var(--tail-h) calc(var(--tail-w) / 2) 0 calc(var(--tail-w) / 2); border-style: solid; border-color: var(--bubble-bg) transparent transparent transparent; z-index: 2;
+        }
+        .style-bubble.dir-bottom-center::before {
+            content: ''; position: absolute; bottom: calc((var(--tail-h) + var(--bubble-bs)) * -1); left: 50%; transform: translateX(-50%);
+            border-width: calc(var(--tail-h) + var(--bubble-bs)) calc((var(--tail-w) / 2) + var(--bubble-bs)) 0 calc((var(--tail-w) / 2) + var(--bubble-bs)); border-style: solid; border-color: var(--bubble-bc) transparent transparent transparent; z-index: 1;
+        }
+
+        /* CAUDA: CIMA - ESQUERDA */
+        .style-bubble.dir-top-left::after {
+            content: ''; position: absolute; top: calc(var(--tail-h) * -1); left: var(--tail-pos); 
+            border-width: 0 var(--tail-w) var(--tail-h) 0; border-style: solid; border-color: transparent transparent var(--bubble-bg) transparent; z-index: 2;
+        }
+        .style-bubble.dir-top-left::before {
+            content: ''; position: absolute; top: calc((var(--tail-h) + var(--bubble-bs)) * -1); left: var(--tail-pos); 
+            border-width: 0 calc(var(--tail-w) + var(--bubble-bs)) calc(var(--tail-h) + var(--bubble-bs)) 0; border-style: solid; border-color: transparent transparent var(--bubble-bc) transparent; margin-left: calc(var(--bubble-bs) * -1); z-index: 1;
+        }
+
+        /* CAUDA: CIMA - DIREITA */
+        .style-bubble.dir-top-right::after {
+            content: ''; position: absolute; top: calc(var(--tail-h) * -1); right: var(--tail-pos); 
+            border-width: 0 0 var(--tail-h) var(--tail-w); border-style: solid; border-color: transparent transparent var(--bubble-bg) transparent; z-index: 2;
+        }
+        .style-bubble.dir-top-right::before {
+            content: ''; position: absolute; top: calc((var(--tail-h) + var(--bubble-bs)) * -1); right: var(--tail-pos); 
+            border-width: 0 0 calc(var(--tail-h) + var(--bubble-bs)) calc(var(--tail-w) + var(--bubble-bs)); border-style: solid; border-color: transparent transparent var(--bubble-bc) transparent; margin-right: calc(var(--bubble-bs) * -1); z-index: 1;
+        }
+
+        /* CAUDA: CIMA - CENTRO */
+        .style-bubble.dir-top-center::after {
+            content: ''; position: absolute; top: calc(var(--tail-h) * -1); left: 50%; transform: translateX(-50%);
+            border-width: 0 calc(var(--tail-w) / 2) var(--tail-h) calc(var(--tail-w) / 2); border-style: solid; border-color: transparent transparent var(--bubble-bg) transparent; z-index: 2;
+        }
+        .style-bubble.dir-top-center::before {
+            content: ''; position: absolute; top: calc((var(--tail-h) + var(--bubble-bs)) * -1); left: 50%; transform: translateX(-50%);
+            border-width: 0 calc((var(--tail-w) / 2) + var(--bubble-bs)) calc(var(--tail-h) + var(--bubble-bs)) calc((var(--tail-w) / 2) + var(--bubble-bs)); border-style: solid; border-color: transparent transparent var(--bubble-bc) transparent; z-index: 1;
+        }
+        /* ======================================================== */
         
         /* 4. PERSONA 5 ROYAL */
         .style-persona { 
             position: relative;
             padding: 35px 50px; 
             border: none !important; 
-            background: transparent !important; 
+            background-color: transparent !important; 
             box-shadow: none !important;
             min-width: 250px;
             max-width: 90%;
@@ -154,14 +223,10 @@
         }
         
         .style-persona::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background-image: url('persona_5_dialog_box_by_rodroseasons_dborar3.png');
-            background-size: 100% 100%;
-            background-repeat: no-repeat;
-            z-index: -1;
-            transform: scale(var(--bubble-scale)); 
+            background-size: 100% 100%; background-repeat: no-repeat;
+            z-index: -1; transform: scale(var(--bubble-scale)); 
         }
 
         .style-persona.tail-right::before {
@@ -170,7 +235,7 @@
 
         .style-persona .msg-text, .style-persona .msg-orig { 
             text-shadow: none !important; 
-            transform: var(--text-transform) skewX(-4deg);
+            transform: scaleX(var(--text-scale-x)) skewX(-4deg);
         }
 
     </style>
@@ -193,9 +258,11 @@
         let historyArray = [];
 
         function hexToRgba(hex, alpha) {
-            if(!hex) return 'transparent';
-            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            try {
+                if(!hex || typeof hex !== 'string' || hex.length < 7) return `rgba(0,0,0,${alpha})`;
+                let r = parseInt(hex.slice(1, 3), 16); let g = parseInt(hex.slice(3, 5), 16); let b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            } catch(e) { return `rgba(0,0,0,0.8)`; }
         }
 
         function connectWS() {
@@ -205,7 +272,6 @@
                     const d = JSON.parse(e.data);
                     
                     if (d.cfg) {
-                        // POSIÇÃO E JANELA
                         anchor.style.left = d.cfg.x + "%";
                         anchor.style.top = d.cfg.y + "%";
                         anchor.style.transform = `translate(-${d.cfg.x}%, -${d.cfg.y}%)`;
@@ -215,15 +281,19 @@
                         msgList.style.flexDirection = d.cfg.flow;
                         msgList.style.justifyContent = 'flex-start';
 
-                        // ATUALIZAÇÃO SEGURA DAS VARIÁVEIS NO :ROOT
                         rootStyle.setProperty('--box-bg', hexToRgba(d.cfg.boxBg, d.cfg.boxOp));
-                        
-                        // O DESACOPLAMENTO FÍSICO DO BACKGROUND
                         rootStyle.setProperty('--bubble-width', d.cfg.bubW);
                         rootStyle.setProperty('--bubble-height', d.cfg.bubH);
                         
                         rootStyle.setProperty('--bubble-bg', hexToRgba(d.cfg.msgBg, d.cfg.msgOp));
+                        rootStyle.setProperty('--bubble-bc', d.cfg.msgBC);
+                        rootStyle.setProperty('--bubble-bs', d.cfg.msgBS);
+                        rootStyle.setProperty('--bubble-rad', d.cfg.bRad);
                         rootStyle.setProperty('--bubble-scale', d.cfg.bScale);
+
+                        rootStyle.setProperty('--tail-h', d.cfg.tH);
+                        rootStyle.setProperty('--tail-w', d.cfg.tW);
+                        rootStyle.setProperty('--tail-pos', d.cfg.tPos);
 
                         rootStyle.setProperty('--font-color', d.cfg.fontC);
                         rootStyle.setProperty('--stroke-color', d.cfg.strkC);
@@ -233,20 +303,11 @@
                         rootStyle.setProperty('--text-max-width', d.cfg.tMaxW);
                         rootStyle.setProperty('--text-offset-x', d.cfg.tOffX);
                         rootStyle.setProperty('--text-offset-y', d.cfg.tOffY);
+                        rootStyle.setProperty('--text-scale-x', d.cfg.tScX); 
 
                         rootStyle.setProperty('--font-family', `"${d.cfg.font}", sans-serif`);
-
-                        // EFEITO ARSENAL
-                        if (d.cfg.font === 'Arsenal') {
-                            rootStyle.setProperty('--text-transform', 'scaleX(1.15)');
-                            rootStyle.setProperty('--text-transform-origin', 'left center');
-                        } else {
-                            rootStyle.setProperty('--text-transform', 'none');
-                            rootStyle.setProperty('--text-transform-origin', 'left center');
-                        }
                     }
 
-                    // A MÁGICA DO HISTÓRICO ZERO (0)
                     let limit = parseInt(d.cfg.hist) || 0;
 
                     if (d.isFinal && d.trans) {
@@ -260,14 +321,17 @@
                         historyArray = [];
                     }
 
-                    // RENDERIZAÇÃO DOM
                     if (d.orig || d.trans || historyArray.length > 0) {
                         msgList.innerHTML = ""; 
                         
                         historyArray.forEach((msg) => {
                             const block = document.createElement('div');
-                            let pClass = d.cfg.bStyle === 'persona' ? `tail-${d.cfg.pTail}` : "";
-                            block.className = `message-row style-${d.cfg.bStyle} ${pClass}`;
+                            // LÓGICA CONTEXTUAL DE CLASSES
+                            let addClass = "";
+                            if (d.cfg.bStyle === 'persona') addClass = `tail-${d.cfg.pTail}`;
+                            if (d.cfg.bStyle === 'bubble') addClass = `dir-${d.cfg.bTailDir}`;
+                            
+                            block.className = `message-row style-${d.cfg.bStyle} ${addClass}`;
                             
                             let origHtml = d.cfg.origOn ? `<div class="msg-orig">${msg.orig}</div>` : "";
                             block.innerHTML = `<div class="text-wrapper"><div class="msg-text">${msg.trans}</div>${origHtml}</div>`;
@@ -278,8 +342,11 @@
 
                         if (!d.isFinal && d.orig) {
                             const interim = document.createElement('div');
-                            let pClass = d.cfg.bStyle === 'persona' ? `tail-${d.cfg.pTail}` : "";
-                            interim.className = `message-row style-${d.cfg.bStyle} ${pClass}`;
+                            let addClass = "";
+                            if (d.cfg.bStyle === 'persona') addClass = `tail-${d.cfg.pTail}`;
+                            if (d.cfg.bStyle === 'bubble') addClass = `dir-${d.cfg.bTailDir}`;
+                            
+                            interim.className = `message-row style-${d.cfg.bStyle} ${addClass}`;
                             interim.style.opacity = "0.7";
                             
                             let origHtml = d.cfg.origOn ? `<div class="msg-orig">${d.orig}</div>` : "";

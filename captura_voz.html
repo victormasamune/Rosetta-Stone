@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Rosetta Stone | Mesh Decoupling v18</title>
+    <title>Rosetta Stone | V27.0 Clean Slate</title>
     <link rel="icon" href="data:,">
     <style>
         :root {
@@ -17,8 +17,6 @@
         .header p { margin: 0; color: var(--text-muted); font-size: 10px; letter-spacing: 2px; }
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; width: 100%; max-width: 1600px; }
         .panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .panel.highlight-layout { border: 2px solid var(--accent-primary); }
-        .panel.highlight-bubble { border: 2px solid var(--accent-success); }
         .panel-title { font-size: 11px; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 5px; text-transform: uppercase; }
         label { font-size: 10px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
         select, input[type="text"], input[type="password"] { width: 100%; padding: 6px 8px; font-size: 12px; border-radius: 4px; background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); outline: none; box-sizing: border-box;}
@@ -41,10 +39,12 @@
         .log-box { background: #000; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); min-height: 60px; }
         #original-log { color: #666; font-size: 10px; font-style: italic; border-bottom: 1px solid #111; padding-bottom: 3px; margin-bottom: 3px;}
         #translated-log { color: var(--accent-success); font-weight: 700; font-size: 13px; }
+        
+        .context-group { border-left: 2px solid var(--accent-primary); padding-left: 10px; margin: 10px 0; background: rgba(0,0,0,0.2); padding-top: 5px; padding-bottom: 5px; border-radius: 0 8px 8px 0; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>Rosetta <span>Stone</span></h1><p>MESH DECOUPLING ENGINE v18.0</p></div>
+    <div class="header"><h1>Rosetta <span>Stone</span></h1><p>CLEAN SLATE UI v27.0</p></div>
     
     <div class="dashboard">
         <div class="panel">
@@ -71,7 +71,7 @@
             <div class="log-box"><div id="original-log">Aguardando...</div><div id="translated-log">-</div></div>
         </div>
 
-        <div class="panel highlight-layout">
+        <div class="panel">
             <div class="panel-title">2. Janela Mestra (Limite da Tela)</div>
             <label>Posição X (%): <span id="valX">50%</span></label><input type="range" id="cfgPosX" min="0" max="100" value="50" oninput="upd('valX', this.value+'%')">
             <label>Posição Y (%): <span id="valY">90%</span></label><input type="range" id="cfgPosY" min="0" max="100" value="90" oninput="upd('valY', this.value+'%')">
@@ -88,46 +88,76 @@
             <label>Opacidade Janela: <span id="valBg">0%</span></label><input type="range" id="cfgBgOpacity" min="0" max="100" value="0" oninput="upd('valBg', this.value+'%')">
         </div>
 
-        <div class="panel highlight-bubble">
+        <div class="panel" style="border: 2px solid var(--accent-success);">
             <div class="panel-title">3. Estilo & Dimensões da Bolha</div>
             <label>Estilo de cada Frase:</label>
-            <select id="cfgBubbleStyle" onchange="sendDataManual()">
+            <select id="cfgBubbleStyle" onchange="updateUI(); sendDataManual();">
+                <option value="bubble" selected>Speech Bubble Clássica</option>
                 <option value="persona">Persona 5 (Background PNG Nativo)</option>
-                <option value="bubble">Speech Bubble Clássica</option>
                 <option value="box">Bloco Sólido</option>
                 <option value="plain">Texto Limpo (Sem Fundo)</option>
             </select>
 
-            <label style="margin-top:10px;">Direção da Ponta (Apenas P5):</label>
-            <select id="cfgPersonaTail" onchange="sendDataManual()">
-                <option value="left">Ponta para Esquerda</option>
-                <option value="right">Ponta para Direita</option>
-            </select>
+            <div id="grp-persona" class="context-group" style="display: none;">
+                <label style="color: var(--accent-primary);">Espelhar Fundo P5:</label>
+                <select id="cfgPersonaTail" onchange="sendDataManual()">
+                    <option value="left">Padrão (Ponta Esquerda)</option>
+                    <option value="right">Invertido (Ponta Direita)</option>
+                </select>
+                <label style="margin-top:10px;">Aumentar/Diminuir Fundo P5: <span id="valBubbleScale">1.0x</span></label>
+                <input type="range" id="cfgBubbleScale" min="0.5" max="2.5" step="0.1" value="1.0" oninput="upd('valBubbleScale', this.value+'x')">
+            </div>
 
-            <label style="margin-top:10px; color: var(--accent-success);">Largura Fixa da Bolha: <span id="valBubW">Automático</span></label>
+            <div id="grp-bubble" class="context-group">
+                <label style="color: var(--accent-success);">Posição da Cauda:</label>
+                <select id="cfgBubbleTailDir" onchange="sendDataManual()">
+                    <option value="bottom-left">Baixo - Esquerda</option>
+                    <option value="bottom-center">Baixo - Centro</option>
+                    <option value="bottom-right">Baixo - Direita</option>
+                    <option value="top-left">Cima - Esquerda</option>
+                    <option value="top-center">Cima - Centro</option>
+                    <option value="top-right">Cima - Direita</option>
+                </select>
+
+                <label style="margin-top:10px; color: var(--accent-success);">Comprimento da Cauda: <span id="valTailH">25px</span></label>
+                <input type="range" id="cfgTailH" min="0" max="100" value="25" oninput="upd('valTailH', this.value+'px')">
+                
+                <label style="color: var(--accent-success);">Largura da Cauda: <span id="valTailW">30px</span></label>
+                <input type="range" id="cfgTailW" min="0" max="100" value="30" oninput="upd('valTailW', this.value+'px')">
+
+                <label style="color: var(--accent-success);">Afastamento da Cauda: <span id="valTailPos">35px</span></label>
+                <input type="range" id="cfgTailPos" min="0" max="200" value="35" oninput="upd('valTailPos', this.value+'px')">
+            </div>
+
+            <div id="grp-box-bubble" class="context-group">
+                <label style="color: var(--accent-hover);">Arredondamento (Radius): <span id="valRadius">12px</span></label>
+                <input type="range" id="cfgBubbleRadius" min="0" max="100" value="12" oninput="upd('valRadius', this.value+'px')">
+
+                <div class="color-picker-group" style="margin-top:10px;"><label>Cor Fundo Sólido</label><input type="color" id="cfgBubbleBgHex" value="#1a1a24" onchange="sendDataManual()"></div>
+                <label>Opacidade Fundo: <span id="valBBg">90%</span></label><input type="range" id="cfgBubbleOp" min="0" max="100" value="90" oninput="upd('valBBg', this.value+'%')">
+                
+                <div class="color-picker-group" style="margin-top:5px;"><label>Cor da Borda</label><input type="color" id="cfgBubbleBorderColor" value="#9146FF" onchange="sendDataManual()"></div>
+                <label>Espessura Borda: <span id="valBBorder">0px</span></label><input type="range" id="cfgBubbleBorderSize" min="0" max="10" value="0" oninput="upd('valBBorder', this.value+'px')">
+            </div>
+
+            <label style="margin-top:10px;">Largura Fixa da Bolha: <span id="valBubW">Automático</span></label>
             <input type="range" id="cfgBubW" min="0" max="1200" step="10" value="0" oninput="upd('valBubW', this.value == 0 ? 'Automático' : this.value+'px')">
 
-            <label style="color: var(--accent-success);">Altura Fixa da Bolha: <span id="valBubH">Automático</span></label>
+            <label>Altura Fixa da Bolha: <span id="valBubH">Automático</span></label>
             <input type="range" id="cfgBubH" min="0" max="600" step="10" value="0" oninput="upd('valBubH', this.value == 0 ? 'Automático' : this.value+'px')">
-
-            <label style="margin-top:5px;">Aumentar/Diminuir Fundo P5: <span id="valBubbleScale">1.0x</span></label>
-            <input type="range" id="cfgBubbleScale" min="0.5" max="2.5" step="0.1" value="1.0" oninput="upd('valBubbleScale', this.value+'x')">
             
             <label style="margin-top:10px;">Histórico (0 = Limpa ao Falar): <span id="valHist">0</span></label>
             <input type="range" id="cfgHistoryLimit" min="0" max="10" value="0" oninput="upd('valHist', this.value)">
 
             <label>Tempo Pós-Fala (Segundos): <span id="valTime">6s</span></label>
             <input type="range" id="cfgDisplayTime" min="1" max="30" value="6" oninput="upd('valTime', this.value+'s')">
-
-            <div class="color-picker-group" style="margin-top:10px;"><label>Cor Bolha Sólida</label><input type="color" id="cfgBubbleBgHex" value="#1a1a24" onchange="sendDataManual()"></div>
-            <label>Opacidade Bolha Sólida: <span id="valBBg">90%</span></label><input type="range" id="cfgBubbleOp" min="0" max="100" value="90" oninput="upd('valBBg', this.value+'%')">
         </div>
 
         <div class="panel">
             <div class="panel-title">4. Formatação do Texto (Fine-Tuning)</div>
             <label>Família da Fonte:</label>
             <select id="cfgFontFamily" onchange="sendDataManual();">
-                <option value="Arsenal">Arsenal (P5 +15% Largura)</option>
+                <option value="Arsenal">Arsenal</option>
                 <option value="Roboto">Roboto</option>
                 <option value="Montserrat">Montserrat</option>
                 <option value="Bebas Neue">Bebas Neue</option>
@@ -135,10 +165,13 @@
                 <option value="Bangers">Bangers</option>
             </select>
 
-            <label style="margin-top:10px; color: var(--accent-success);">Tamanho da Fonte: <span id="valFontSize">2.2em</span></label>
+            <label style="margin-top:10px;">Tamanho da Fonte: <span id="valFontSize">2.2em</span></label>
             <input type="range" id="cfgFontSize" min="1.0" max="5.0" step="0.1" value="2.2" oninput="upd('valFontSize', this.value+'em')">
+
+            <label style="margin-top:5px;">Alargar Fonte (Scale X): <span id="valFontScale">1.00x</span></label>
+            <input type="range" id="cfgTextScaleX" min="0.5" max="3.0" step="0.05" value="1.0" oninput="upd('valFontScale', this.value+'x')">
             
-            <label style="margin-top:5px; color: var(--accent-success);">Largura Máx. do Texto (Quebra linha): <span id="valTextW">800px</span></label>
+            <label style="margin-top:5px;">Largura Máx. do Texto: <span id="valTextW">800px</span></label>
             <input type="range" id="cfgTextMaxWidth" min="100" max="1500" step="10" value="800" oninput="upd('valTextW', this.value+'px')">
 
             <label style="margin-top:10px; color: var(--accent-primary);">Mover Texto Eixo X (Direita/Esquerda): <span id="valTextOffsetX">0px</span></label>
@@ -157,14 +190,39 @@
     </div>
 
     <script>
-        let ws, rec, isRec = false;
-        let audioContext, analyser, microphoneStream;
-        let isTranslating = false;
-        let testCount = 1;
+        let ws, rec, isRec = false, audioContext, analyser, microphoneStream;
+        let isTranslating = false, testCount = 1;
 
         const savedKey = localStorage.getItem('geminiKey');
         if (savedKey) document.getElementById('cfgApiKey').value = savedKey;
         document.getElementById('cfgApiKey').addEventListener('change', (e) => localStorage.setItem('geminiKey', e.target.value));
+
+        // A MÁGICA CONTEXTUAL (Injeção via Element Style direto para burlar cache)
+        function updateUI() {
+            const style = document.getElementById('cfgBubbleStyle').value;
+            const pPersona = document.getElementById('grp-persona');
+            const pBubble = document.getElementById('grp-bubble');
+            const pBoxBub = document.getElementById('grp-box-bubble');
+
+            pPersona.style.display = 'none';
+            pBubble.style.display = 'none';
+            pBoxBub.style.display = 'none';
+
+            if (style === 'persona') {
+                pPersona.style.display = 'block';
+            } else if (style === 'bubble') {
+                pBubble.style.display = 'block';
+                pBoxBub.style.display = 'block';
+            } else if (style === 'box') {
+                pBoxBub.style.display = 'block';
+            }
+        }
+
+        // Executa IMEDIATAMENTE ao abrir a página
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('cfgBubbleStyle').value = 'bubble'; // Força estado padrão
+            updateUI();
+        });
 
         function upd(id, val) { document.getElementById(id).innerText = val; sendDataManual(); }
 
@@ -221,7 +279,6 @@
 
         function sendData(orig, trans, isFinal) {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                // Prepara as variaveis de Largura/Altura da Bolha
                 let vBW = document.getElementById('cfgBubW').value;
                 let vBH = document.getElementById('cfgBubH').value;
 
@@ -238,19 +295,31 @@
                         boxOp: document.getElementById('cfgBgOpacity').value / 100,
                         
                         bStyle: document.getElementById('cfgBubbleStyle').value,
-                        pTail: document.getElementById('cfgPersonaTail').value,
                         
-                        // DESACOPLAMENTO (O Segredo para a bolha não sumir)
+                        // VARIÁVEIS EXCLUSIVAS PERSONA
+                        pTail: document.getElementById('cfgPersonaTail').value,
+                        bScale: document.getElementById('cfgBubbleScale').value,
+                        
+                        // VARIÁVEIS EXCLUSIVAS BUBBLE CLÁSSICA (6 Direções)
+                        bTailDir: document.getElementById('cfgBubbleTailDir').value,
+                        tH: document.getElementById('cfgTailH').value + 'px',
+                        tW: document.getElementById('cfgTailW').value + 'px',
+                        tPos: document.getElementById('cfgTailPos').value + 'px',
+                        
+                        // VARIÁVEIS COMPARTILHADAS (Box/Bubble)
+                        bRad: document.getElementById('cfgBubbleRadius').value + 'px',
+                        msgBg: document.getElementById('cfgBubbleBgHex').value,
+                        msgOp: document.getElementById('cfgBubbleOp').value / 100,
+                        msgBC: document.getElementById('cfgBubbleBorderColor').value,
+                        msgBS: document.getElementById('cfgBubbleBorderSize').value + 'px',
+
+                        // GERAL
                         bubW: vBW == 0 ? "fit-content" : vBW + "px",
                         bubH: vBH == 0 ? "fit-content" : vBH + "px",
-                        bScale: document.getElementById('cfgBubbleScale').value,
-
                         hist: document.getElementById('cfgHistoryLimit').value,
                         time: document.getElementById('cfgDisplayTime').value * 1000,
                         
-                        msgBg: document.getElementById('cfgBubbleBgHex').value,
-                        msgOp: document.getElementById('cfgBubbleOp').value / 100,
-                        
+                        // TIPOGRAFIA
                         font: document.getElementById('cfgFontFamily').value,
                         fontC: document.getElementById('cfgFontColor').value,
                         strkC: document.getElementById('cfgStrokeColor').value,
@@ -259,6 +328,7 @@
                         tMaxW: document.getElementById('cfgTextMaxWidth').value + 'px',
                         tOffX: document.getElementById('cfgTextOffsetX').value + 'px',
                         tOffY: document.getElementById('cfgTextOffsetY').value + 'px',
+                        tScX: document.getElementById('cfgTextScaleX').value,
                         
                         origOn: document.getElementById('cfgShowOriginal').checked
                     }
@@ -268,12 +338,10 @@
 
         function sendDataManual() { sendData("", "", false); }
 
-        function sendTest() {
-            sendData("You'll never see it coming!", "TESTE COM BOLHA DESACOPLADA [" + testCount + "]", true);
+        document.getElementById('btnTest').addEventListener('click', () => {
+            sendData("You're wide open!", "INTERFACE CONTEXTUAL BLINDADA [" + testCount + "]", true);
             testCount++;
-        }
-        
-        document.getElementById('btnTest').addEventListener('click', sendTest);
+        });
 
         function setupRecognition() {
             if(!window.SpeechRecognition && !window.webkitSpeechRecognition) return;
