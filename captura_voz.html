@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Rosetta Stone | Master Control v5.0</title>
+    <style>
+        :root {
+            --bg-body: #0b0c10; --bg-panel: #16171b; --bg-input: #22242a;
+            --border-color: #2a2c33; --accent-primary: #9146FF; 
+            --accent-hover: #a970ff; --accent-danger: #f04747; --accent-success: #00FFA3;
+            --text-main: #f8f8f2; --text-muted: #8b8d96;
+            --radius-sm: 6px; --radius-md: 12px; --transition: 0.15s ease-in-out;
+        }
+
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 26px; font-weight: 900; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 1px;}
+        .header p { margin: 0; color: var(--text-muted); font-size: 10px; letter-spacing: 2px; }
+
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; width: 100%; max-width: 1500px; }
+        .panel { background-color: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .panel.highlight-layout { border: 2px solid var(--accent-primary); box-shadow: 0 0 20px rgba(145, 70, 255, 0.2); }
+        .panel.wide { grid-column: 1 / -1; }
+        
+        .panel-title { font-size: 11px; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; text-transform: uppercase; }
+
+        label { font-size: 10px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+        select, input[type="text"], input[type="password"], textarea { width: 100%; padding: 8px 10px; font-size: 13px; border-radius: var(--radius-sm); background-color: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); outline: none; transition: var(--transition); font-family: inherit; }
+        
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; height: 20px;}
+        input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: var(--bg-input); border-radius: 2px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--accent-primary); margin-top: -6px; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.5);}
+
+        .vu-meter { width: 100%; height: 6px; background: #000; border-radius: 3px; overflow: hidden; border: 1px solid var(--border-color); }
+        .vu-bar { height: 100%; width: 0%; background: var(--accent-success); transition: width 0.1s ease; }
+
+        .toggle-group { display: flex; align-items: center; justify-content: space-between; background: var(--bg-input); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid #2a2c33; }
+        .toggle-switch { position: relative; width: 34px; height: 18px; display: inline-block;}
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 18px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: var(--accent-primary); }
+        input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+        .color-picker-group { display: flex; align-items: center; justify-content: space-between; background: var(--bg-input); padding: 5px 10px; border-radius: var(--radius-sm); }
+        input[type="color"] { border: none; width: 30px; height: 22px; cursor: pointer; background: none; padding: 0; }
+
+        button { padding: 14px; font-size: 13px; font-weight: 800; color: #fff; background: var(--accent-primary); border: none; border-radius: var(--radius-sm); cursor: pointer; text-transform: uppercase; transition: 0.3s; margin-top: 5px; }
+        button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        button.recording { background: var(--accent-danger); box-shadow: 0 0 15px rgba(240, 71, 71, 0.4); }
+        button.btn-test { background: #222; color: var(--accent-success); border: 1px solid var(--accent-success); }
+
+        .log-box { background: #000; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); min-height: 80px; }
+        #original-log { color: #666; font-size: 11px; font-style: italic; }
+        #translated-log { color: var(--accent-success); font-weight: 700; font-size: 14px; }
+        
+        .status-bar { font-size: 9px; text-align: center; color: var(--text-muted); margin-top: 8px; font-weight: bold; }
+        .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-danger); margin-right: 5px; }
+        .status-dot.active { background: var(--accent-success); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Rosetta <span>Stone</span></h1>
+        <p>ULTIMATE BROADCAST ENGINE v5.0</p>
+    </div>
+
+    <div class="dashboard">
+        
+        <div class="panel">
+            <div class="panel-title"><span>Processamento Vocal</span></div>
+            <label>Sua Voz:</label>
+            <select id="sourceLang">
+                <option value="pt-BR">Português (Brasil)</option>
+                <option value="en-US">Inglês (EUA)</option>
+                <option value="es-419">Espanhol (LATAM)</option>
+                <option value="it-IT">Italiano</option>
+                <option value="fr-FR">Francês</option>
+                <option value="zh-CN">Mandarim</option>
+                <option value="ja-JP">Japonês</option>
+            </select>
+            <label>Tradução Alvo:</label>
+            <select id="targetLang">
+                <option value="en">Inglês</option>
+                <option value="pt">Português (Brasil)</option>
+                <option value="es">Espanhol (LATAM)</option>
+                <option value="ja">Japonês</option>
+            </select>
+            <label>Monitor de Áudio:</label>
+            <div class="vu-meter"><div class="vu-bar" id="vuBar"></div></div>
+            <label style="margin-top:5px;">Chave API Gemini:</label>
+            <input type="password" id="cfgApiKey" placeholder="Sua Chave...">
+            <button id="btnStart">Iniciar Captura</button>
+            <button class="btn-test" onclick="sendTestTelemetria()">Modo Teste (Visualizar Box)</button>
+            <div class="status-bar"><span class="status-dot" id="statusDot"></span> <span id="statusText">Motor Offline</span></div>
+            <div class="log-box">
+                <div id="original-log">Log...</div>
+                <div id="translated-log">-</div>
+            </div>
+        </div>
+
+        <div class="panel highlight-layout">
+            <div class="panel-title"><span>Posicionamento X/Y</span></div>
+            <label>Posição X (%): <span id="valX">50%</span></label>
+            <input type="range" id="cfgPosX" min="0" max="100" value="50" oninput="document.getElementById('valX').innerText = this.value + '%'; sendDataManual();">
+            <label>Posição Y (%): <span id="valY">90%</span></label>
+            <input type="range" id="cfgPosY" min="0" max="100" value="90" oninput="document.getElementById('valY').innerText = this.value + '%'; sendDataManual();">
+            <label>Largura Fixa (PX): <span id="valW">600px</span></label>
+            <input type="range" id="cfgBoxWidth" min="200" max="1920" value="600" oninput="document.getElementById('valW').innerText = this.value + 'px'; sendDataManual();">
+            <label>Altura Fixa (PX): <span id="valH">250px</span></label>
+            <input type="range" id="cfgBoxHeight" min="50" max="1080" value="250" oninput="document.getElementById('valH').innerText = this.value + 'px'; sendDataManual();">
+            <label>Fluxo do Texto:</label>
+            <select id="cfgTextFlow" onchange="sendDataManual();">
+                <option value="bottom-to-top">De Baixo para Cima (Log)</option>
+                <option value="top-to-bottom">De Cima para Baixo (Chat)</option>
+                <option value="center">Centralizado</option>
+            </select>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title"><span>Visual e FX</span></div>
+            <label>Animação:</label>
+            <select id="cfgAnimType" onchange="sendDataManual();">
+                <option value="fade">Fade In/Out</option>
+                <option value="slide">Slide Vertical</option>
+                <option value="zoom">Zoom Bounce</option>
+            </select>
+            <label>Tempo na Tela: <span id="valTime">6s</span></label>
+            <input type="range" id="cfgDisplayTime" min="1" max="30" value="6" oninput="document.getElementById('valTime').innerText = this.value + 's'; sendDataManual();">
+            <div class="color-picker-group">
+                <label style="margin:0;">Fundo</label>
+                <input type="color" id="cfgBgColor" value="#000000" onchange="sendDataManual();">
+            </div>
+            <label>Opacidade Fundo: <span id="valBg">85%</span></label>
+            <input type="range" id="cfgBgOpacity" min="0" max="100" value="85" oninput="document.getElementById('valBg').innerText = this.value + '%'; sendDataManual();">
+            <label>SVG Pattern:</label>
+            <select id="cfgBgPattern" onchange="sendDataManual();">
+                <option value="none">Liso</option>
+                <option value="waves1">Ondas</option>
+                <option value="shapes">Formas</option>
+                <option value="hexagons">Hexágonos</option>
+            </select>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title"><span>Tipografia & Borda</span></div>
+            <label>Fonte:</label>
+            <select id="cfgFontFamily" onchange="toggleFontUpload(); sendDataManual();">
+                <optgroup label="Google Fonts">
+                    <option value="Orbitron">Orbitron</option>
+                    <option value="Anton">Anton</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Montserrat">Montserrat</option>
+                </optgroup>
+                <option value="Custom">UPLOAD (.TTF)</option>
+            </select>
+            <div id="fontUploadWrap" style="display:none;"><input type="file" id="cfgCustomFontFile" accept=".ttf,.otf"></div>
+            <div class="color-picker-group">
+                <label style="margin:0;">Cor Fonte</label>
+                <input type="color" id="cfgFontColor" value="#ffffff" onchange="sendDataManual();">
+            </div>
+            <div class="toggle-group">
+                <label style="margin:0;">Moldura</label>
+                <label class="toggle-switch"><input type="checkbox" id="cfgShowBorder" checked onchange="sendDataManual();"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="color-picker-group">
+                <label style="margin:0;">Cor Moldura</label>
+                <input type="color" id="cfgBorderColor" value="#9146FF" onchange="sendDataManual();">
+            </div>
+            <div class="toggle-group">
+                <label style="margin:0;">Original</label>
+                <label class="toggle-switch"><input type="checkbox" id="cfgShowOriginal" checked onchange="sendDataManual();"><span class="toggle-slider"></span></label>
+            </div>
+        </div>
+
+        <div class="panel wide">
+            <textarea id="cfgCustomCSS" placeholder="/* CSS Extra */" onchange="sendDataManual();"></textarea>
+        </div>
+    </div>
+
+    <script>
+        const btnStart = document.getElementById('btnStart');
+        const statusDot = document.getElementById('statusDot');
+        const originalLog = document.getElementById('original-log');
+        const translatedLog = document.getElementById('translated-log');
+        
+        let ws, recognition, isRecording = false;
+        let audioContext, analyser, microphoneStream;
+        let customFontBase64 = "";
+
+        const googleFontsSet = new Set(["Orbitron", "Anton", "Roboto", "Montserrat"]);
+
+        const savedKey = localStorage.getItem('geminiKey');
+        if (savedKey) document.getElementById('cfgApiKey').value = savedKey;
+        document.getElementById('cfgApiKey').addEventListener('change', (e) => localStorage.setItem('geminiKey', e.target.value));
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8765');
+            ws.onopen = () => { statusDot.classList.add('active'); document.getElementById('statusText').innerText = "Online"; };
+            ws.onclose = () => { statusDot.classList.remove('active'); setTimeout(connectWebSocket, 3000); };
+        }
+
+        async function startVUMeter() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                microphoneStream = stream;
+                audioContext = new AudioContext();
+                analyser = audioContext.createAnalyser();
+                const mic = audioContext.createMediaStreamSource(stream);
+                const processor = audioContext.createScriptProcessor(2048, 1, 1);
+                analyser.fftSize = 256;
+                mic.connect(analyser); processor.connect(audioContext.destination);
+                processor.onaudioprocess = () => {
+                    if (!isRecording) return;
+                    const data = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(data);
+                    const avg = data.reduce((a,b) => a+b) / data.length;
+                    document.getElementById('vuBar').style.width = Math.min(avg * 3, 100) + '%';
+                };
+            } catch (e) {}
+        }
+
+        async function translateLiteral(text) {
+            if (!text) return "";
+            const sl = document.getElementById('sourceLang').value.split('-')[0];
+            const tl = document.getElementById('targetLang').value;
+            if (sl === tl) return text;
+            try {
+                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`);
+                const data = await res.json(); return data[0][0][0];
+            } catch (e) { return text; }
+        }
+
+        async function translateAI(text) {
+            const key = document.getElementById('cfgApiKey').value.trim();
+            if (!key) return await translateLiteral(text);
+            const target = document.getElementById('targetLang').value;
+            const prompt = `Traduza para ${target} mantendo gírias gamer. Retorne APENAS a tradução: ${text}`;
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await res.json(); return data.candidates[0].content.parts[0].text.trim();
+            } catch (e) { return await translateLiteral(text); }
+        }
+
+        function sendData(original, translated, isFinal) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const fontVal = document.getElementById('cfgFontFamily').value;
+                ws.send(JSON.stringify({
+                    original: original, translated: translated, isFinal: isFinal,
+                    config: {
+                        posX: document.getElementById('cfgPosX').value,
+                        posY: document.getElementById('cfgPosY').value,
+                        boxWidth: document.getElementById('cfgBoxWidth').value + "px",
+                        boxHeight: document.getElementById('cfgBoxHeight').value + "px",
+                        textFlow: document.getElementById('cfgTextFlow').value,
+                        showOriginal: document.getElementById('cfgShowOriginal').checked,
+                        animType: document.getElementById('cfgAnimType').value,
+                        displayTime: document.getElementById('cfgDisplayTime').value * 1000,
+                        bgColorHex: document.getElementById('cfgBgColor').value,
+                        bgOpacity: document.getElementById('cfgBgOpacity').value / 100,
+                        bgPattern: document.getElementById('cfgBgPattern').value,
+                        patternColor: document.getElementById('cfgPatternColor').value,
+                        showBorder: document.getElementById('cfgShowBorder').checked,
+                        borderColor: document.getElementById('cfgBorderColor').value,
+                        fontFamily: fontVal, isGoogleFont: googleFontsSet.has(fontVal),
+                        fontColor: document.getElementById('cfgFontColor').value,
+                        customFontBase64: customFontBase64,
+                        customCSS: document.getElementById('cfgCustomCSS').value
+                    }
+                }));
+            }
+        }
+
+        function sendDataManual() { sendData("", "", false); }
+
+        function sendTestTelemetria() {
+            sendData("Exemplo de Texto Original (Base)\nExemplo 2\nExemplo Recente (Topo)", "TESTE FX v5.0: Rosetta Stone Engine com Animações Ativadas!", true);
+        }
+
+        function setupRecognition() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!window.SpeechRecognition) return;
+            recognition = new window.SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.onstart = () => { isRecording = true; btnStart.classList.add('recording'); btnStart.innerText = "PARAR"; startVUMeter(); };
+            recognition.onend = () => { if (isRecording) recognition.start(); };
+            recognition.onresult = async (event) => {
+                let current = '';
+                let isFinal = false;
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    current += event.results[i][0].transcript;
+                    if (event.results[i].isFinal) isFinal = true;
+                }
+                originalLog.innerText = current;
+                let trans = isFinal ? await translateAI(current) : await translateLiteral(current);
+                translatedLog.innerText = trans;
+                sendData(current, trans, isFinal);
+            };
+        }
+
+        btnStart.addEventListener('click', () => {
+            if (!isRecording) { recognition.lang = document.getElementById('sourceLang').value; recognition.start(); }
+            else { isRecording = false; recognition.stop(); btnStart.classList.remove('recording'); btnStart.innerText = "INICIAR"; if (microphoneStream) microphoneStream.getTracks().forEach(t => t.stop()); }
+        });
+
+        function toggleFontUpload() {
+            document.getElementById('fontUploadWrap').style.display = document.getElementById('cfgFontFamily').value === 'Custom' ? 'block' : 'none';
+        }
+
+        document.getElementById('cfgCustomFontFile').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = (evt) => { customFontBase64 = evt.target.result; sendTestTelemetria(); };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        connectWebSocket();
+        setupRecognition();
+    </script>
+</body>
+</html>
