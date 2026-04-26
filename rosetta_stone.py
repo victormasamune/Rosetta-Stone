@@ -56,7 +56,7 @@ def start_http_server():
     Handler = http.server.SimpleHTTPRequestHandler
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", 8080), Handler) as httpd:
-        print("[HTTP] Servidor de Assets servindo na porta 8080.")
+        print("[HTTP] Assets da interface servindo na porta 8080.")
         httpd.serve_forever()
 
 # ==========================================

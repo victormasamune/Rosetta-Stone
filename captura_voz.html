@@ -17,14 +17,14 @@
         .header h1 { margin: 0; font-size: 26px; font-weight: 900; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 1px;}
         .header p { margin: 0; color: var(--text-muted); font-size: 10px; letter-spacing: 2px; }
 
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; width: 100%; max-width: 1500px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; width: 100%; max-width: 1500px; }
         .panel { background-color: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .panel.highlight-layout { border: 2px solid var(--accent-primary); box-shadow: 0 0 20px rgba(145, 70, 255, 0.2); }
+        .panel.highlight-layout { border: 2px solid var(--accent-primary); }
         .panel.wide { grid-column: 1 / -1; }
         
         .panel-title { font-size: 11px; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; text-transform: uppercase; }
 
-        label { font-size: 10px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+        label { font-size: 11px; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
         select, input[type="text"], input[type="password"], textarea { width: 100%; padding: 8px 10px; font-size: 13px; border-radius: var(--radius-sm); background-color: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); outline: none; transition: var(--transition); font-family: inherit; }
         
         input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; height: 20px;}
@@ -52,7 +52,7 @@
 
         .log-box { background: #000; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); min-height: 80px; }
         #original-log { color: #666; font-size: 11px; font-style: italic; }
-        #translated-log { color: var(--accent-success); font-weight: 700; font-size: 14px; }
+        #translated-log { color: var(--accent-success); font-weight: 700; font-size: 15px; }
         
         .status-bar { font-size: 9px; text-align: center; color: var(--text-muted); margin-top: 8px; font-weight: bold; }
         .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-danger); margin-right: 5px; }
@@ -69,7 +69,7 @@
     <div class="dashboard">
         
         <div class="panel">
-            <div class="panel-title"><span>Processamento Vocal</span></div>
+            <div class="panel-title"><span>Processamento Vocal</span> <span class="badge">IA Gemini</span></div>
             <label>Sua Voz:</label>
             <select id="sourceLang">
                 <option value="pt-BR">Português (Brasil)</option>
@@ -86,6 +86,9 @@
                 <option value="pt">Português (Brasil)</option>
                 <option value="es">Espanhol (LATAM)</option>
                 <option value="ja">Japonês</option>
+                <option value="it">Italiano</option>
+                <option value="fr">Francês</option>
+                <option value="zh">Mandarim</option>
             </select>
             <label>Monitor de Áudio:</label>
             <div class="vu-meter"><div class="vu-bar" id="vuBar"></div></div>
@@ -101,51 +104,71 @@
         </div>
 
         <div class="panel highlight-layout">
-            <div class="panel-title"><span>Posicionamento X/Y</span></div>
-            <label>Posição X (%): <span id="valX">50%</span></label>
+            <div class="panel-title"><span>Posicionamento e Janela Fixa</span> <span class="badge">Eixos X/Y</span></div>
+            
+            <label>Posição X (Horizontal %): <span id="valX">50%</span></label>
             <input type="range" id="cfgPosX" min="0" max="100" value="50" oninput="document.getElementById('valX').innerText = this.value + '%'; sendDataManual();">
-            <label>Posição Y (%): <span id="valY">90%</span></label>
+            
+            <label>Posição Y (Vertical %): <span id="valY">90%</span></label>
             <input type="range" id="cfgPosY" min="0" max="100" value="90" oninput="document.getElementById('valY').innerText = this.value + '%'; sendDataManual();">
+
             <label>Largura Fixa (PX): <span id="valW">600px</span></label>
             <input type="range" id="cfgBoxWidth" min="200" max="1920" value="600" oninput="document.getElementById('valW').innerText = this.value + 'px'; sendDataManual();">
+
             <label>Altura Fixa (PX): <span id="valH">250px</span></label>
             <input type="range" id="cfgBoxHeight" min="50" max="1080" value="250" oninput="document.getElementById('valH').innerText = this.value + 'px'; sendDataManual();">
-            <label>Fluxo do Texto:</label>
+
+            <label>Fluxo do Texto (Gravidade):</label>
             <select id="cfgTextFlow" onchange="sendDataManual();">
-                <option value="bottom-to-top">De Baixo para Cima (Log)</option>
-                <option value="top-to-bottom">De Cima para Baixo (Chat)</option>
+                <option value="bottom-to-top">De Baixo para Cima (Print Style)</option>
+                <option value="top-to-bottom">De Cima para Baixo (Chat Style)</option>
                 <option value="center">Centralizado</option>
             </select>
+
+            <div class="toggle-group">
+                <label style="margin:0;">Exibir Idioma Nativo</label>
+                <label class="toggle-switch"><input type="checkbox" id="cfgShowOriginal" checked onchange="sendDataManual();"><span class="toggle-slider"></span></label>
+            </div>
         </div>
 
         <div class="panel">
-            <div class="panel-title"><span>Visual e FX</span></div>
-            <label>Animação:</label>
+            <div class="panel-title"><span>Estética e Animação</span> <span class="badge">Visual</span></div>
+            
+            <label>Animação Entrada/Saída:</label>
             <select id="cfgAnimType" onchange="sendDataManual();">
                 <option value="fade">Fade In/Out</option>
                 <option value="slide">Slide Vertical</option>
                 <option value="zoom">Zoom Bounce</option>
             </select>
-            <label>Tempo na Tela: <span id="valTime">6s</span></label>
+
+            <label>Persistência (Segundos): <span id="valTime">6s</span></label>
             <input type="range" id="cfgDisplayTime" min="1" max="30" value="6" oninput="document.getElementById('valTime').innerText = this.value + 's'; sendDataManual();">
+
             <div class="color-picker-group">
-                <label style="margin:0;">Fundo</label>
+                <label style="margin:0;">Fundo da Box</label>
                 <input type="color" id="cfgBgColor" value="#000000" onchange="sendDataManual();">
             </div>
-            <label>Opacidade Fundo: <span id="valBg">85%</span></label>
+            <label>Opacidade: <span id="valBg">85%</span></label>
             <input type="range" id="cfgBgOpacity" min="0" max="100" value="85" oninput="document.getElementById('valBg').innerText = this.value + '%'; sendDataManual();">
-            <label>SVG Pattern:</label>
+
+            <label>Padrão SVG:</label>
             <select id="cfgBgPattern" onchange="sendDataManual();">
                 <option value="none">Liso</option>
                 <option value="waves1">Ondas</option>
                 <option value="shapes">Formas</option>
                 <option value="hexagons">Hexágonos</option>
+                <option value="stars">Estrelas</option>
             </select>
+            <div class="color-picker-group">
+                <label style="margin:0;">Cor da Textura</label>
+                <input type="color" id="cfgPatternColor" value="#ffffff" onchange="sendDataManual();">
+            </div>
         </div>
 
         <div class="panel">
-            <div class="panel-title"><span>Tipografia & Borda</span></div>
-            <label>Fonte:</label>
+            <div class="panel-title"><span>Tipografia & Borda</span> <span class="badge">Style</span></div>
+            
+            <label>Família da Fonte:</label>
             <select id="cfgFontFamily" onchange="toggleFontUpload(); sendDataManual();">
                 <optgroup label="Google Fonts">
                     <option value="Orbitron">Orbitron</option>
@@ -153,29 +176,30 @@
                     <option value="Roboto">Roboto</option>
                     <option value="Montserrat">Montserrat</option>
                 </optgroup>
-                <option value="Custom">UPLOAD (.TTF)</option>
+                <option value="Custom">UPLOAD FONTE (.TTF)</option>
             </select>
             <div id="fontUploadWrap" style="display:none;"><input type="file" id="cfgCustomFontFile" accept=".ttf,.otf"></div>
+
             <div class="color-picker-group">
-                <label style="margin:0;">Cor Fonte</label>
+                <label style="margin:0;">Cor da Fonte</label>
                 <input type="color" id="cfgFontColor" value="#ffffff" onchange="sendDataManual();">
             </div>
+
             <div class="toggle-group">
-                <label style="margin:0;">Moldura</label>
+                <label style="margin:0;">Moldura (Bounding Box)</label>
                 <label class="toggle-switch"><input type="checkbox" id="cfgShowBorder" checked onchange="sendDataManual();"><span class="toggle-slider"></span></label>
             </div>
             <div class="color-picker-group">
-                <label style="margin:0;">Cor Moldura</label>
+                <label style="margin:0;">Cor da Moldura</label>
                 <input type="color" id="cfgBorderColor" value="#9146FF" onchange="sendDataManual();">
             </div>
-            <div class="toggle-group">
-                <label style="margin:0;">Original</label>
-                <label class="toggle-switch"><input type="checkbox" id="cfgShowOriginal" checked onchange="sendDataManual();"><span class="toggle-slider"></span></label>
-            </div>
+
+            <label style="margin-top:10px;">Censor Anti-Ban:</label>
+            <input type="text" id="cfgProfanityList" placeholder="Palavras separadas por vírgula" onchange="sendDataManual();">
         </div>
 
         <div class="panel wide">
-            <textarea id="cfgCustomCSS" placeholder="/* CSS Extra */" onchange="sendDataManual();"></textarea>
+            <textarea id="cfgCustomCSS" placeholder="/* Injeção Manual de CSS para o OBS */" onchange="sendDataManual();"></textarea>
         </div>
     </div>
 
@@ -197,7 +221,7 @@
 
         function connectWebSocket() {
             ws = new WebSocket('ws://localhost:8765');
-            ws.onopen = () => { statusDot.classList.add('active'); document.getElementById('statusText').innerText = "Online"; };
+            ws.onopen = () => { statusDot.classList.add('active'); document.getElementById('statusText').innerText = "Engine Pronta"; };
             ws.onclose = () => { statusDot.classList.remove('active'); setTimeout(connectWebSocket, 3000); };
         }
 
@@ -221,6 +245,13 @@
             } catch (e) {}
         }
 
+        function filterProfanity(text) {
+            const list = document.getElementById('cfgProfanityList').value.split(',').map(w => w.trim()).filter(w => w !== '');
+            let filtered = text;
+            list.forEach(w => { filtered = filtered.replace(new RegExp(`\\b${w}\\b`, 'gi'), '***'); });
+            return filtered;
+        }
+
         async function translateLiteral(text) {
             if (!text) return "";
             const sl = document.getElementById('sourceLang').value.split('-')[0];
@@ -234,7 +265,7 @@
 
         async function translateAI(text) {
             const key = document.getElementById('cfgApiKey').value.trim();
-            if (!key) return await translateLiteral(text);
+            if (!key || text.includes('***')) return await translateLiteral(text);
             const target = document.getElementById('targetLang').value;
             const prompt = `Traduza para ${target} mantendo gírias gamer. Retorne APENAS a tradução: ${text}`;
             try {
@@ -278,7 +309,7 @@
         function sendDataManual() { sendData("", "", false); }
 
         function sendTestTelemetria() {
-            sendData("Exemplo de Texto Original (Base)\nExemplo 2\nExemplo Recente (Topo)", "TESTE FX v5.0: Rosetta Stone Engine com Animações Ativadas!", true);
+            sendData("Texto de Exemplo 1: Base\nTexto de Exemplo 2: Meio\nFrase Recente: Topo", "TESTE: Rosetta Stone Engine v5.0 com Bounding Box Fixa e Eixos X/Y operacionais!", true);
         }
 
         function setupRecognition() {
@@ -287,7 +318,7 @@
             recognition = new window.SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.onstart = () => { isRecording = true; btnStart.classList.add('recording'); btnStart.innerText = "PARAR"; startVUMeter(); };
+            recognition.onstart = () => { isRecording = true; btnStart.classList.add('recording'); btnStart.innerText = "PARAR CAPTURA"; startVUMeter(); };
             recognition.onend = () => { if (isRecording) recognition.start(); };
             recognition.onresult = async (event) => {
                 let current = '';
@@ -296,6 +327,7 @@
                     current += event.results[i][0].transcript;
                     if (event.results[i].isFinal) isFinal = true;
                 }
+                current = filterProfanity(current);
                 originalLog.innerText = current;
                 let trans = isFinal ? await translateAI(current) : await translateLiteral(current);
                 translatedLog.innerText = trans;
@@ -305,7 +337,7 @@
 
         btnStart.addEventListener('click', () => {
             if (!isRecording) { recognition.lang = document.getElementById('sourceLang').value; recognition.start(); }
-            else { isRecording = false; recognition.stop(); btnStart.classList.remove('recording'); btnStart.innerText = "INICIAR"; if (microphoneStream) microphoneStream.getTracks().forEach(t => t.stop()); }
+            else { isRecording = false; recognition.stop(); btnStart.classList.remove('recording'); btnStart.innerText = "INICIAR CAPTURA"; if (microphoneStream) microphoneStream.getTracks().forEach(t => t.stop()); }
         });
 
         function toggleFontUpload() {

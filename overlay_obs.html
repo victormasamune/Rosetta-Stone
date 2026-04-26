@@ -11,40 +11,61 @@
             padding: 25px; 
             border-radius: 15px; 
             text-align: center; 
-            display: none; /* Controlado via JS */
+            opacity: 0; 
+            display: flex; 
             flex-direction: column; 
-            overflow: hidden; 
+            overflow: hidden; /* Bounding Box solicita */
             box-shadow: 0px 8px 32px rgba(0,0,0,0.6); 
             box-sizing: border-box;
+            transition: opacity 0.4s ease, left 0.2s ease, top 0.2s ease;
         }
 
         #bg-pattern { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.2; }
-        #content-wrapper { position: relative; z-index: 2; width: 100%; height: 100%; display: flex; flex-direction: column; }
-
-        .message-block { margin-bottom: 15px; flex-shrink: 0; }
-        #translated-text { font-weight: 800; font-size: 2.3em; line-height: 1.1; color: white; text-shadow: 2px 2px 5px rgba(0,0,0,0.9); width: 100%; word-wrap: break-word; }
-        #original-text { color: rgba(255, 255, 255, 0.6); font-size: 1em; font-weight: 400; font-style: italic; margin-top: 10px; width: 100%; word-wrap: break-word; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px; }
-
-        /* === KEYFRAME FX ENGINE (MANDATORY FOR OBS) === */
         
-        /* FADE */
-        .fade-in { animation: fadeInFX 0.5s forwards; }
-        .fade-out { animation: fadeOutFX 0.5s forwards; }
-        @keyframes fadeInFX { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeOutFX { from { opacity: 1; } to { opacity: 0; } }
+        /* content-wrapper agora ocupa 100% da altura da box para ditar a gravidade */
+        #content-wrapper { 
+            position: relative; 
+            z-index: 2; 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+        }
 
-        /* SLIDE */
-        .slide-in { animation: slideInFX 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
-        .slide-out { animation: slideOutFX 0.5s ease-in forwards; }
-        @keyframes slideInFX { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideOutFX { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(40px); } }
+        .message-block {
+            margin-bottom: 15px;
+            flex-shrink: 0; /* Impede que o texto amasse */
+        }
 
-        /* ZOOM */
-        .zoom-in { animation: zoomInFX 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
-        .zoom-out { animation: zoomOutFX 0.4s ease-in forwards; }
-        @keyframes zoomInFX { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
-        @keyframes zoomOutFX { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.5); } }
+        #translated-text { 
+            font-weight: 800; 
+            font-size: 2.3em; 
+            line-height: 1.1; 
+            color: white; 
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.9); 
+            width: 100%; 
+            word-wrap: break-word; 
+        }
 
+        #original-text { 
+            color: rgba(255, 255, 255, 0.6); 
+            font-size: 1em; 
+            font-weight: 400; 
+            font-style: italic; 
+            margin-top: 10px; 
+            width: 100%; 
+            word-wrap: break-word; 
+            border-top: 1px solid rgba(255,255,255,0.1); 
+            padding-top: 5px; 
+        }
+
+        /* FX ENGINE */
+        .visible { opacity: 1 !important; }
+        .fade-anim { transition: opacity 0.5s ease; }
+        .slide-anim { transition: transform 0.5s ease, opacity 0.5s ease; }
+        .zoom-anim { transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.4s ease; }
+
+        .hidden-fx { opacity: 0 !important; transform: scale(0.8) translateY(20px); }
     </style>
 </head>
 <body id="obs-body">
@@ -80,27 +101,33 @@
                 try {
                     const data = JSON.parse(event.data);
                     if (data.config) {
-                        // 1. POSICIONAMENTO E BOX FIXA
+                        // 1. POSICIONAMENTO ABSOLUTO X/Y
                         container.style.left = data.config.posX + "%";
                         container.style.top = data.config.posY + "%";
                         container.style.transform = `translate(-${data.config.posX}%, -${data.config.posY}%)`;
+                        
+                        // 2. TAMANHO FIXO (BLINDADO)
                         container.style.width = data.config.boxWidth;
                         container.style.height = data.config.boxHeight;
                         container.style.backgroundColor = hexToRgba(data.config.bgColorHex, data.config.bgOpacity);
                         container.style.border = data.config.showBorder ? `4px solid ${data.config.borderColor}` : "none";
 
-                        // 2. GRAVIDADE
-                        if (data.config.textFlow === 'bottom-to-top') contentWrapper.style.justifyContent = 'flex-end';
-                        else if (data.config.textFlow === 'top-to-bottom') contentWrapper.style.justifyContent = 'flex-start';
-                        else contentWrapper.style.justifyContent = 'center';
+                        // 3. GRAVIDADE DO TEXTO (CORREÇÃO FINAL)
+                        if (data.config.textFlow === 'bottom-to-top') {
+                            contentWrapper.style.justifyContent = 'flex-end';
+                        } else if (data.config.textFlow === 'top-to-bottom') {
+                            contentWrapper.style.justifyContent = 'flex-start';
+                        } else {
+                            contentWrapper.style.justifyContent = 'center';
+                        }
 
-                        // 3. TEXTURAS
+                        // 4. TEXTURAS
                         if (data.config.bgPattern !== "none" && svgDict[data.config.bgPattern]) {
                             const svg = svgDict[data.config.bgPattern].replace(/\{c\}/g, data.config.patternColor.replace('#', '%23'));
                             bgPatternDiv.style.backgroundImage = `url("${svg}")`;
                         } else { bgPatternDiv.style.backgroundImage = "none"; }
 
-                        // 4. FONTES
+                        // 5. FONTES
                         if (data.config.fontFamily === 'Custom' && data.config.customFontBase64) {
                             let fNode = document.getElementById('dyn-font') || document.createElement('style');
                             fNode.id = 'dyn-font';
@@ -112,15 +139,20 @@
                             gNode.href = `https://fonts.googleapis.com/css2?family=${data.config.fontFamily.replace(/ /g, '+')}:wght@800&display=swap`;
                             document.head.appendChild(gNode);
                         }
+                        
+                        // 6. CSS EXTRA
+                        let cssNode = document.getElementById('dyn-css') || document.createElement('style');
+                        cssNode.id = 'dyn-css'; cssNode.innerHTML = data.config.customCSS;
+                        document.head.appendChild(cssNode);
                     }
 
-                    // 5. HISTÓRICO
+                    // Lógica de Pilha de Histórico
                     if (data.isFinal && data.translated) {
                         messageHistory.push({ original: data.original, translated: data.translated });
                         if (messageHistory.length > 3) messageHistory.shift();
                     }
 
-                    // RENDERIZAÇÃO
+                    // Renderização Dinâmica na Box
                     contentWrapper.innerHTML = "";
                     messageHistory.forEach((msg) => {
                         const block = document.createElement('div');
@@ -130,6 +162,7 @@
                         contentWrapper.appendChild(block);
                     });
 
+                    // Texto Interim (Falas em andamento)
                     if (!data.isFinal && data.translated) {
                         const interim = document.createElement('div');
                         interim.className = "message-block";
@@ -139,21 +172,16 @@
                         contentWrapper.appendChild(interim);
                     }
 
-                    // TRIGGER FX (CONSERTO)
-                    const inAnim = `${data.config.animType}-in`;
-                    const outAnim = `${data.config.animType}-out`;
-
-                    container.style.display = 'flex';
-                    container.classList.remove(outAnim);
-                    container.classList.add(inAnim);
+                    // FX ENGINE
+                    container.classList.remove('hidden-fx');
+                    container.classList.add('visible');
 
                     clearTimeout(hideTimeout);
                     if (data.isFinal) {
                         hideTimeout = setTimeout(() => {
-                            container.classList.remove(inAnim);
-                            container.classList.add(outAnim);
+                            container.classList.add('hidden-fx');
                             setTimeout(() => { 
-                                container.style.display = 'none'; 
+                                container.classList.remove('visible'); 
                                 messageHistory = []; 
                             }, 500);
                         }, data.config.displayTime);
